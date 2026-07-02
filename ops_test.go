@@ -90,3 +90,8 @@ func TestMaskedFillCausal(t *testing.T) {
 		t.Fatalf("position (1,0) should be unchanged, got %v", out.At(1, 0))
 	}
 }
+
+func TestMaskedFillCausalGrad(t *testing.T) {
+	a := Const(3, 3, []float64{1, 2, 3, 4, 5, 6, 7, 8, 9})
+	gradCheck(t, []*Tensor{a}, func() *Tensor { return reduce(MaskedFillCausal(a)) })
+}
