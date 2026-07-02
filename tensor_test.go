@@ -31,3 +31,13 @@ func TestAddGrad(t *testing.T) {
 	build := func() *Tensor { return MatMul(onesT, MatMul(Add(a, b), ones)) }
 	gradCheck(t, []*Tensor{a, b}, build)
 }
+
+func TestMulScalarGrad(t *testing.T) {
+	a := Const(2, 2, []float64{1, 2, 3, 4})
+	ones := Const(2, 1, []float64{1, 1})
+	onesT := Const(1, 2, []float64{1, 1})
+	build := func() *Tensor {
+		return MatMul(onesT, MatMul(MulScalar(a, 3.0), ones))
+	}
+	gradCheck(t, []*Tensor{a}, build)
+}
