@@ -6,7 +6,7 @@ import (
 )
 
 // The full model must reduce loss on a tiny repeating pattern within a few
-// hundred steps — proof the whole stack (embeddings, attention, blocks, loss,
+// hundred steps: proof the whole stack (embeddings, attention, blocks, loss,
 // backprop, AdamW) is wired correctly end to end.
 func TestModelLearnsPattern(t *testing.T) {
 	rng := rand.New(rand.NewSource(1))

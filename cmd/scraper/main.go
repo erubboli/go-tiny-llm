@@ -1,6 +1,6 @@
 // Command scraper downloads one or more URLs, strips HTML, keeps only the
 // model's vocabulary, and writes the result to data/input.txt. Not featured in
-// the articles — the repo ships with data/input.txt already, so this is optional.
+// the articles: the repo ships with data/input.txt already, so this is optional.
 //
 // Usage: go run ./cmd/scraper https://example.com/a https://example.com/b
 package main

@@ -7,7 +7,7 @@ import (
 
 // Head is one attention head. Each position produces a query, a key, and a
 // value. A position's output is a weighted average of the values of all
-// positions it is allowed to see (itself and earlier — the causal mask), where
+// positions it is allowed to see (itself and earlier, the causal mask), where
 // the weights come from how well its query matches each key.
 type Head struct {
 	Wq, Wk, Wv *Tensor // each [embed, headSize]

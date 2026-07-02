@@ -1,6 +1,6 @@
 # go-tiny-llm
 
-A character-level transformer language model written from scratch in Go — no
+A character-level transformer language model written from scratch in Go, with no
 frameworks, no dependencies for the core, small enough to read in an afternoon.
 Companion code for the "Build a Tiny LLM in Go" article series.
 

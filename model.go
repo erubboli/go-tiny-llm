@@ -66,7 +66,7 @@ func NewModel(vocabSize int, rng *rand.Rand) *Model {
 	return m
 }
 
-// Forward returns [T, vocab] logits — a next-character score distribution for
+// Forward returns [T, vocab] logits: a next-character score distribution for
 // every position in the input.
 func (m *Model) Forward(ids []int) *Tensor {
 	T := len(ids)
@@ -89,7 +89,7 @@ func (m *Model) Loss(ids, targets []int) *Tensor {
 }
 
 // Generate autoregressively extends `seed` by n characters: predict, sample,
-// append, repeat — feeding at most the last ContextWindow characters back in.
+// append, repeat, feeding at most the last ContextWindow characters back in.
 func (m *Model) Generate(rng *rand.Rand, seed []int, n int) []int {
 	out := append([]int{}, seed...)
 	for i := 0; i < n; i++ {

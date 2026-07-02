@@ -3,7 +3,7 @@ package tiny
 import "math/rand"
 
 // Bigram is the simplest possible language model: a table counting how often
-// each character follows each other character. No learning, no math — just
+// each character follows each other character. No learning, no math, just
 // tallies. It already "works", which is the surprise. Its flaw: it only ever
 // looks one character back.
 type Bigram struct {
