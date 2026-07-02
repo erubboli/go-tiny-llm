@@ -20,7 +20,7 @@ func TestModelLearnsPattern(t *testing.T) {
 	first := 0.0
 	var last float64
 	for step := 0; step < 400; step++ {
-		i := rng.Intn(len(ids) - seq - 1)
+		i := rng.Intn(len(ids) - seq)
 		loss := m.Loss(ids[i:i+seq], ids[i+1:i+seq+1])
 		opt.ZeroGrad()
 		loss.Backward()

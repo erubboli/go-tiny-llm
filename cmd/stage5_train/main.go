@@ -18,7 +18,7 @@ func main() {
 	}
 	tok := tiny.NewTokenizer()
 	ids := tok.Encode(string(text))
-	if len(ids) < tiny.ContextWindow+1 {
+	if len(ids) < tiny.ContextWindow+2 {
 		fmt.Println("training text too short")
 		os.Exit(1)
 	}
@@ -29,7 +29,7 @@ func main() {
 
 	seq := tiny.ContextWindow
 	for step := 0; step < tiny.TrainSteps; step++ {
-		i := rng.Intn(len(ids) - seq - 1)
+		i := rng.Intn(len(ids) - seq)
 		loss := m.Loss(ids[i:i+seq], ids[i+1:i+seq+1])
 		opt.ZeroGrad()
 		loss.Backward()
