@@ -92,6 +92,15 @@ func TestMaskedFillCausal(t *testing.T) {
 }
 
 func TestMaskedFillCausalGrad(t *testing.T) {
-	a := Const(3, 3, []float64{1, 2, 3, 4, 5, 6, 7, 8, 9})
-	gradCheck(t, []*Tensor{a}, func() *Tensor { return reduce(MaskedFillCausal(a)) })
+	// Test the mask the way attention uses it: masked scores -> softmax.
+	// Reducing the raw -1e9 sentinels directly causes catastrophic
+	// cancellation in the finite-difference check, so compose through
+	// Softmax (which maps -1e9 to ~0) and weight the columns for a
+	// non-constant objective.
+	a := Const(3, 3, []float64{0.1, 0.2, 0.3, -0.4, 0.5, 0.6, 0.7, -0.8, 0.9})
+	w := Const(3, 1, []float64{1, 2, 3})
+	onesL := Const(1, 3, []float64{1, 1, 1})
+	gradCheck(t, []*Tensor{a}, func() *Tensor {
+		return MatMul(onesL, MatMul(Softmax(MaskedFillCausal(a)), w))
+	})
 }
