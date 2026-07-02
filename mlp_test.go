@@ -27,3 +27,8 @@ func TestMLPOverfitsOneExample(t *testing.T) {
 		t.Fatalf("MLP failed to overfit one example: loss %.4f", last)
 	}
 }
+
+func TestReshapeToRowGrad(t *testing.T) {
+	a := Const(2, 3, []float64{1, 2, 3, 4, 5, 6})
+	gradCheck(t, []*Tensor{a}, func() *Tensor { return reduce(reshapeToRow(a)) })
+}

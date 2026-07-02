@@ -32,4 +32,9 @@ const (
 	AdamBeta1  = 0.9
 	AdamBeta2  = 0.99
 	AdamEps    = 1e-8
+
+	// WeightDecay is AdamW's decoupled weight decay. Left at 0 for this tiny
+	// model (so it behaves like plain Adam); real transformers use a small
+	// value like 0.01 to gently pull weights toward zero.
+	WeightDecay = 0.0
 )

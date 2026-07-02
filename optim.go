@@ -19,6 +19,8 @@ func Param(rows, cols int, rng *rand.Rand) *Tensor {
 // AdamW is the optimizer: it remembers a running average of each gradient and
 // its square, giving every parameter its own adaptive step size. Plain gradient
 // descent struggles to train transformers; Adam is what makes it converge.
+// The "W" stands for decoupled weight decay, applied separately from the
+// gradient-based Adam step (see WeightDecay constant).
 type AdamW struct {
 	params []*Tensor
 	lr     float64
@@ -47,7 +49,9 @@ func (o *AdamW) Step() {
 			o.v[pi][i] = AdamBeta2*o.v[pi][i] + (1-AdamBeta2)*g*g
 			mhat := o.m[pi][i] / b1c
 			vhat := o.v[pi][i] / b2c
-			p.Data[i] -= o.lr * mhat / (math.Sqrt(vhat) + AdamEps)
+			// AdamW: decoupled weight decay added directly to the update,
+			// separate from the gradient-based Adam step.
+			p.Data[i] -= o.lr * (mhat/(math.Sqrt(vhat)+AdamEps) + WeightDecay*p.Data[i])
 		}
 	}
 }

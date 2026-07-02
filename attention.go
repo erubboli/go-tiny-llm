@@ -50,6 +50,9 @@ type MultiHead struct {
 }
 
 func NewMultiHead(embed, numHeads, headSize int, rng *rand.Rand) *MultiHead {
+	if numHeads*headSize != embed {
+		panic("NewMultiHead: numHeads*headSize must equal embed")
+	}
 	heads := make([]*Head, numHeads)
 	for i := range heads {
 		heads[i] = NewHead(embed, headSize, rng)
