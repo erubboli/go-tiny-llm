@@ -15,6 +15,7 @@ go run ./cmd/stage2_context   # why counting longer context explodes (article 2)
 go run ./cmd/stage3_mlp       # the first model that learns (article 3)
 go run ./cmd/stage4_attention # attention weights, visualised (article 4)
 go run ./cmd/stage5_train     # the full transformer trains + dreams (article 5)
+go run ./cmd/stage6_distill   # a small student learns from a big teacher (article 6)
 ```
 
 ## Tune it
