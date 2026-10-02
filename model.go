@@ -14,15 +14,21 @@ type Block struct {
 }
 
 func NewBlock(rng *rand.Rand) *Block {
-	hidden := EmbedDim * FeedForwardMult
+	return NewBlockDims(EmbedDim, NumHeads, rng)
+}
+
+// NewBlockDims builds a block of a given width. The feed-forward hidden layer
+// stays at 4x the embedding dimension, as in the default model.
+func NewBlockDims(embedDim, numHeads int, rng *rand.Rand) *Block {
+	hidden := embedDim * FeedForwardMult
 	return &Block{
-		norm1: onesRow(EmbedDim),
-		norm2: onesRow(EmbedDim),
-		attn:  NewMultiHead(EmbedDim, NumHeads, HeadSize, rng),
-		w1:    Param(EmbedDim, hidden, rng),
+		norm1: onesRow(embedDim),
+		norm2: onesRow(embedDim),
+		attn:  NewMultiHead(embedDim, numHeads, embedDim/numHeads, rng),
+		w1:    Param(embedDim, hidden, rng),
 		b1:    NewTensor(1, hidden),
-		w2:    Param(hidden, EmbedDim, rng),
-		b2:    NewTensor(1, EmbedDim),
+		w2:    Param(hidden, embedDim, rng),
+		b2:    NewTensor(1, embedDim),
 	}
 }
 
@@ -41,23 +47,63 @@ func (b *Block) Params() []*Tensor {
 // a final norm, and a projection to a score per possible next character.
 type Model struct {
 	tokEmb *Tensor // [vocab, embed]
-	posEmb *Tensor // [ContextWindow, embed]
+	posEmb *Tensor // [contextWindow, embed]
 	blocks []*Block
 	normF  *Tensor // [1, embed]
 	head   *Tensor // [embed, vocab]
-	Params []*Tensor
+
+	ctxWindow int // this model's own context window (normally ContextWindow)
+	Params    []*Tensor
+}
+
+// ModelConfig describes the shape of a Model. Zero fields fall back to the
+// package constants, so DefaultModelConfig reproduces NewModel exactly.
+type ModelConfig struct {
+	EmbedDim      int
+	NumLayers     int
+	NumHeads      int
+	ContextWindow int
+}
+
+// DefaultModelConfig is the shape trained by stage5_train.
+func DefaultModelConfig() ModelConfig {
+	return ModelConfig{
+		EmbedDim:      EmbedDim,
+		NumLayers:     NumLayers,
+		NumHeads:      NumHeads,
+		ContextWindow: ContextWindow,
+	}
 }
 
 func NewModel(vocabSize int, rng *rand.Rand) *Model {
-	m := &Model{
-		tokEmb: Param(vocabSize, EmbedDim, rng),
-		posEmb: Param(ContextWindow, EmbedDim, rng),
-		normF:  onesRow(EmbedDim),
-		head:   Param(EmbedDim, vocabSize, rng),
+	return NewModelConfig(vocabSize, DefaultModelConfig(), rng)
+}
+
+// NewModelConfig builds a model of an arbitrary shape. Distillation uses this
+// to build a student narrower and shallower than its teacher.
+func NewModelConfig(vocabSize int, cfg ModelConfig, rng *rand.Rand) *Model {
+	if cfg.EmbedDim == 0 {
+		cfg.EmbedDim = EmbedDim
 	}
-	m.blocks = make([]*Block, NumLayers)
+	if cfg.NumLayers == 0 {
+		cfg.NumLayers = NumLayers
+	}
+	if cfg.NumHeads == 0 {
+		cfg.NumHeads = NumHeads
+	}
+	if cfg.ContextWindow == 0 {
+		cfg.ContextWindow = ContextWindow
+	}
+	m := &Model{
+		tokEmb:    Param(vocabSize, cfg.EmbedDim, rng),
+		posEmb:    Param(cfg.ContextWindow, cfg.EmbedDim, rng),
+		normF:     onesRow(cfg.EmbedDim),
+		head:      Param(cfg.EmbedDim, vocabSize, rng),
+		ctxWindow: cfg.ContextWindow,
+	}
+	m.blocks = make([]*Block, cfg.NumLayers)
 	for i := range m.blocks {
-		m.blocks[i] = NewBlock(rng)
+		m.blocks[i] = NewBlockDims(cfg.EmbedDim, cfg.NumHeads, rng)
 	}
 	m.Params = []*Tensor{m.tokEmb, m.posEmb, m.normF, m.head}
 	for _, b := range m.blocks {
@@ -89,13 +135,13 @@ func (m *Model) Loss(ids, targets []int) *Tensor {
 }
 
 // Generate autoregressively extends `seed` by n characters: predict, sample,
-// append, repeat, feeding at most the last ContextWindow characters back in.
+// append, repeat, feeding at most the last m.ctxWindow characters back in.
 func (m *Model) Generate(rng *rand.Rand, seed []int, n int) []int {
 	out := append([]int{}, seed...)
 	for i := 0; i < n; i++ {
 		ctx := out
-		if len(ctx) > ContextWindow {
-			ctx = ctx[len(ctx)-ContextWindow:]
+		if len(ctx) > m.ctxWindow {
+			ctx = ctx[len(ctx)-m.ctxWindow:]
 		}
 		logits := m.Forward(ctx)
 		// take the last row (prediction for the next character)
